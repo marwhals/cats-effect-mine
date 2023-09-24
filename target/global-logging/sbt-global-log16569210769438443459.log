@@ -1,0 +1,84 @@
+[debug] > Exec(early(addDefaultCommands), None, None)
+[debug] > Exec(addDefaultCommands, None, None)
+[debug] > Exec(early(initialize), None, None)
+[debug] > Exec(initialize, None, None)
+[debug] > Exec(boot, None, None)
+[debug] > Exec(writeSbtVersion, None, None)
+[debug] > Exec(reload, None, None)
+[debug] > Exec(sbtStashOnFailure, None, None)
+[debug] > Exec(onFailure loadFailed, None, None)
+[debug] > Exec(loadp, None, None)
+[info] welcome to sbt 1.8.3 (Oracle Corporation Java 11.0.18)
+[debug]       Load.loadUnit: plugins took 351.3103ms
+[debug]       Load.loadUnit: defsScala took 1.8805ms
+[debug] [Loading] Scanning directory C:\Users\Marjan\.sbt\1.0\plugins
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Marjan\.sbt\1.0\plugins, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 40.1511 ms
+[debug]           Load.resolveProject(global-plugins) took 153.8841ms
+[debug]         Load.loadTransitive: finalizeProject(Project(id global-plugins, base: C:\Users\Marjan\.sbt\1.0\plugins, plugins: List(<none>))) took 262.4469ms
+[debug] [Loading] Done in C:\Users\Marjan\.sbt\1.0\plugins, returning: (global-plugins)
+[debug]       Load.loadUnit: loadedProjectsRaw took 430.0429ms
+[debug]       Load.loadUnit: cleanEvalClasses took 0.425ms
+[debug]     Load.loadUnit(file:/C:/Users/Marjan/.sbt/1.0/plugins/, ...) took 822.6744ms
+[debug]   Load.apply: load took 1427.7637ms
+[debug]   Load.apply: resolveProjects took 38.6958ms
+[debug]   Load.apply: finalTransforms took 348.1435ms
+[debug]   Load.apply: config.delegates took 21.2341ms
+[debug]   Load.apply: Def.make(settings)... took 1536.453ms
+[debug]   Load.apply: structureIndex took 309.4576ms
+[debug]   Load.apply: mkStreams took 2.3873ms
+[info] loading global plugins from C:\Users\Marjan\.sbt\1.0\plugins
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug] Load.defaultLoad until apply took 7537.9621ms
+[debug]           Load.loadUnit: plugins took 56.0667ms
+[debug]           Load.loadUnit: defsScala took 0.008ms
+[debug] [Loading] Scanning directory C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine\project
+[debug] [Loading] Found non-root projects 
+[debug] [Loading] Done in C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine\project, returning: ()
+[debug] deducing auto plugins based on known facts Set(Atom(sbt.plugins.CorePlugin)) and clauses Clauses(Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.ScriptedPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.SbtPlugin),Set(Atom(sbt.ScriptedPlugin)))
+[debug] Clause(Atom(sbt.plugins.SemanticdbPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JUnitXmlReportPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.MiniDependencyTreePlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.IvyPlugin)))
+[debug] Clause(Atom(sbt.plugins.IvyPlugin),Set(Atom(sbt.plugins.JvmPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.SemanticdbPlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.JUnitXmlReportPlugin)))
+[debug] Clause(Atom(sbt.plugins.CorePlugin),Set(Atom(sbt.plugins.Giter8TemplatePlugin)))
+[debug] Clause(Atom(sbt.plugins.JvmPlugin),Set(Atom(sbt.plugins.MiniDependencyTreePlugin))))
+[debug]   :: deduced result: Matched(sbt.plugins.CorePlugin,sbt.plugins.Giter8TemplatePlugin,sbt.plugins.IvyPlugin,sbt.plugins.JvmPlugin,sbt.plugins.MiniDependencyTreePlugin,sbt.plugins.JUnitXmlReportPlugin,sbt.plugins.SemanticdbPlugin)
+[debug] Plugins.deducer#function took 4.2802 ms
+[debug]               Load.resolveProject(cats-effect-mine-build) took 18.2116ms
+[debug]             Load.loadTransitive: finalizeProject(Project(id cats-effect-mine-build, base: C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine\project, plugins: List(<none>))) took 23.8578ms
+[debug] [Loading] Done in C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine\project, returning: (cats-effect-mine-build)
+[debug]           Load.loadUnit: loadedProjectsRaw took 26.7698ms
+[debug]           Load.loadUnit: cleanEvalClasses took 0.0166ms
+[debug]         Load.loadUnit(file:/C:/Users/Marjan/Documents/ScalaProjects/cats-effect-mine/project/, ...) took 84.3576ms
+[debug]       Load.apply: load took 86.9575ms
+[debug]       Load.apply: resolveProjects took 0.1397ms
+[debug]       Load.apply: finalTransforms took 12.4861ms
+[debug]       Load.apply: config.delegates took 0.4715ms
+[debug]       Load.apply: Def.make(settings)... took 148.6504ms
+[debug]       Load.apply: structureIndex took 36.6889ms
+[debug]       Load.apply: mkStreams took 0.0022ms
+[info] loading project definition from C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine\project
+[debug] Running task... Cancel: Signal, check cycles: false, forcegc: true
+[debug]     Load.loadUnit: plugins took 3786.5251ms
+[debug]     Load.loadUnit: defsScala took 0.0027ms
+[debug] [Loading] Scanning directory C:\Users\Marjan\Documents\ScalaProjects\cats-effect-mine
+[debug]       Load.loadUnit: mkEval took 9.4052ms

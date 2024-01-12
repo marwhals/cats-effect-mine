@@ -58,10 +58,10 @@ object CancellingIOs extends IOApp.Simple {
 
   val authFlow: IO[Unit] = IO.uncancelable { poll =>
     for {
-      pw       <- poll(inputPassword).onCancel(IO("Authentication timed out. Try again later.").debug.void) // this is cancelable i.e poll is unmasking the effect/IO inputPassword
+      pw <- poll(inputPassword).onCancel(IO("Authentication timed out. Try again later.").debug.void) // this is cancelable i.e poll is unmasking the effect/IO inputPassword
       verified <- verifyPassword(pw) // this is NOT cancelable
-      _        <- if (verified) IO("Authentication successful.").debug // this is NOT cancelable
-                  else IO("Authentication failed.").debug
+      _ <- if (verified) IO("Authentication successful.").debug // this is NOT cancelable
+      else IO("Authentication failed.").debug
     } yield ()
   }
 
@@ -76,10 +76,55 @@ object CancellingIOs extends IOApp.Simple {
     Poll calls are "gaps opened" in the uncancelable region.
    */
 
+  /*
+    Exercises/ illustration of cancellable and poll
+   */
+  // 1
+  val cancelBeforeMol = IO.canceled >> IO(42).debug
+  val uncancelableMol = IO.uncancelable(_ => IO.canceled >> IO(42).debug)
+  // uncancelable will eliminate ALL cancel points - use poll to introduce them
+
+
+  // 2
+  val invincibleAuthProgram = for {
+    authFib <- IO.uncancelable(_ => authFlow).start
+    _ <- IO.sleep(1.seconds) >> IO("Authentication timeout, attempting cancel...").debug >> authFib.cancel
+    _ <- authFib.join
+  } yield ()
+
+  // 3
+  def threeStepProgram(): IO[Unit] = {
+    val sequence = IO.uncancelable { poll =>
+      poll(IO("cancelable").debug >> IO.sleep(1.second) >> IO("cancelable end").debug) >>
+        IO("uncancelable").debug >> IO.sleep(1.second) >> IO("uncancelable end").debug >>
+        poll(IO("second cancelable").debug >> IO.sleep(1.second) >> IO("second cancelable end").debug)
+    }
+
+    for {
+      fib <- sequence.start
+      _ <- IO.sleep(1500.millis) >> IO("CANCELING").debug >> fib.cancel
+      _ <- fib.join
+    } yield ()
+  }
+  // Takeaway - the cancel will be handled by the first cancellable region i.e wrapped in a poll.
+
+  /* Cancellation Regions summary
+  - Make effects ignore cancellation signals with uncancellable
+
+  Define pinpoint cancellation regions by using the poll
+  - everything wrapped in the poll call is cancellable
+  - everything else is not cancellable
+
+  The poll is the 'local' opposite of uncancellable
+  - this can be used as many times as we like
+   */
+
   override def run = {
-//    cancellationOfDoom
-//    noCancellationOfDoom
-    authProgram
+    //    cancellationOfDoom
+    //    noCancellationOfDoom
+//    authProgram
+//    invincibleAuthProgram
+    threeStepProgram()
   }
 
 }

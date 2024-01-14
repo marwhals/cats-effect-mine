@@ -1,6 +1,19 @@
 package part4coordination
 
 import cats.effect.{IO, IOApp, Ref}
+import scala.concurrent.duration.DurationInt
+
+/** Ref recap/summary
+ * - Why: purely functional, thread-safe state management
+ * - Purely functional atomic reference
+ * - Interacting with a Ref is an effect
+ * -- Setting a new value
+ * -- Getting existing value
+ * -- Getting + setting atomically
+ * -- updating with a function
+ * -- updating + getting (old value or new value)
+ * -- modifying + surfacing an external value
+ */
 
 object Refs extends IOApp.Simple {
 
@@ -89,10 +102,83 @@ object Refs extends IOApp.Simple {
     } yield ()
   }
 
+  /*
+  Excercises - refactor impure program into a pure program
+   */
+  def tickingClockImpure(): IO[Unit] = {
+    var ticks: Long = 0L
+
+    def tickingClock: IO[Unit] = for {
+      _ <- IO.sleep(1.second)
+      _ <- IO(System.currentTimeMillis()).debug
+      _ <- IO(ticks += 1) // not thread safe -- shared state
+      _ <- tickingClock
+    } yield ()
+
+    def printTicks: IO[Unit] = for {
+      _ <- IO.sleep(5.seconds)
+      _ <- IO(s"TICKS: $ticks").debug
+      _ <- printTicks
+    } yield ()
+
+    for {
+      _ <- (tickingClock, printTicks).parTupled // running on separate fibers
+    } yield ()
+  }
+
+  def tickingClockPure(): IO[Unit] = {
+    def tickingClock(ticks: Ref[IO, Int]): IO[Unit] = for {
+      _ <- IO.sleep(1.second)
+      _ <- IO(System.currentTimeMillis()).debug
+      _ <- ticks.update(_ + 1) // thread safe effect
+      _ <- tickingClock(ticks)
+    } yield ()
+
+    def printTicks(ticks: Ref[IO, Int]): IO[Unit] = for {
+      _ <- IO.sleep(5.seconds)
+      t <- ticks.get
+      _ <- IO(s"TICKS: $t").debug
+      _ <- printTicks(ticks)
+    } yield ()
+
+    for {
+      tickRef <- Ref[IO].of(0)
+      _ <- (tickingClock(tickRef), printTicks(tickRef)).parTupled
+    } yield ()
+  }
+
+  // This is a incorrect implementation
+  def tickingClockWeird(): IO[Unit] = {
+    val ticks = Ref[IO].of(0) // IO[ref] -- initialising atomic reference
+
+    def tickingClock: IO[Unit] = for {
+      t <- ticks // ticks will give you a NEW Ref -- since it is reinitialised
+      _ <- IO.sleep(1.second)
+      _ <- IO(System.currentTimeMillis()).debug
+      _ <- t.update(_ + 1) // thread safe effect
+      _ <- tickingClock
+    } yield ()
+
+    def printTicks: IO[Unit] = for {
+      t <- ticks // ticks will give you a NEW Ref
+      _ <- IO.sleep(5.seconds)
+      currentTicks <- t.get
+      _ <- IO(s"TICKS: $currentTicks").debug
+      _ <- printTicks
+    } yield ()
+
+    for {
+      _ <- (tickingClock, printTicks).parTupled
+    } yield ()
+  }
+
+
 
   override def run = {
 //    demoConcurrentWorkImpure()
-    demoConcurrentWorkPure()
+//    demoConcurrentWorkPure()
+//    tickingClockImpure()
+    tickingClockPure()
   }
 
 }

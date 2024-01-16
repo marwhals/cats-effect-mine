@@ -1,15 +1,16 @@
 package part4coordination
 
+import cats.effect.kernel.Deferred
 import cats.effect.std.CountDownLatch
-import cats.effect.{IO, IOApp, Resource}
+import cats.effect.{IO, IOApp, Ref, Resource}
 import cats.syntax.parallel._
+import cats.syntax.traverse._
 import utils._
 
 import java.io.{File, FileWriter}
 import scala.concurrent.duration.DurationInt
 import scala.io.Source
 import scala.util.Random
-import cats.syntax.traverse._
 
 object CountdownLatches extends IOApp.Simple {
 
@@ -87,25 +88,25 @@ object CountdownLatches extends IOApp.Simple {
     - block on the latch until each task has finished
     - after all chunks are done, stitch the files together under the same file on disk
    */
-//  def downloadFile(filename: String, destFolder: String): IO[Unit] = for {
-//    n <- FileServer.getNumChunks // just retrieves an IO of int
-//    latch <- CDLatch(n)
-//    _ <- IO(s"Download started on $n fibers.").debug
-//    _ <- (0 until n).toList.parTraverse(id => createFileDownloaderTask(id, latch, filename, destFolder))
-//    _ <- latch.await
-//    _ <- (0 until n).toList.traverse(id => appendFileContents(s"$destFolder/$filename.part$id", s"$destFolder/$filename"))
-//  } yield ()
+  //  def downloadFile(filename: String, destFolder: String): IO[Unit] = for {
+  //    n <- FileServer.getNumChunks // just retrieves an IO of int
+  //    latch <- CDLatch(n)
+  //    _ <- IO(s"Download started on $n fibers.").debug
+  //    _ <- (0 until n).toList.parTraverse(id => createFileDownloaderTask(id, latch, filename, destFolder))
+  //    _ <- latch.await
+  //    _ <- (0 until n).toList.traverse(id => appendFileContents(s"$destFolder/$filename.part$id", s"$destFolder/$filename"))
+  //  } yield ()
 
   def downloadFile(filename: String, destFolder: String): IO[Unit] = for {
     n <- FileServer.getNumChunks
-    latch <- CountDownLatch[IO](n)
+    latch <- CDLatch(n)
     _ <- IO(s"Download started on $n fibers.").debug
     _ <- (0 until n).toList.parTraverse(id => createFileDownloaderTask(id, latch, filename, destFolder))
     _ <- latch.await // wait until countdown is 0
     _ <- (0 until n).toList.traverse(id => appendFileContents(s"$destFolder/$filename.part$id", s"$destFolder/$filename"))
   } yield ()
 
-  def createFileDownloaderTask(id: Int, latch: CountDownLatch[IO], filename: String, destFolder: String): IO[Unit] = for {
+  def createFileDownloaderTask(id: Int, latch: CDLatch, filename: String, destFolder: String): IO[Unit] = for {
     _ <- IO(s"[task $id] downloading chunk...").debug
     _ <- IO.sleep((Random.nextDouble * 1000).toInt.millis)
     chunk <- FileServer.getFileChunk(id)
@@ -116,8 +117,37 @@ object CountdownLatches extends IOApp.Simple {
 
 
   override def run = {
-//    sprint()
+    //    sprint()
     downloadFile("myScalafile.txt", "src/main/resources")
   }
+}
 
+//Exercise - Implement Countdown latch using Ref and Deferred
+
+abstract class CDLatch {
+  def await: IO[Unit]
+  def release: IO[Unit]
+}
+
+object CDLatch {
+  sealed trait State
+  case object Done extends State // CD latch complete
+  case class Live(remainingCount: Int, signal: Deferred[IO, Unit]) extends State //CD latch is still active
+
+  def apply(count: Int): IO[CDLatch] = for {
+    signal <- Deferred[IO, Unit]
+    state <- Ref[IO].of[State](Live(count, signal))
+  } yield new CDLatch {
+
+    override def await = state.get.flatMap { s =>
+      if (s == Done) IO.unit // continue, the latch is complete
+      else signal.get // block here
+    }
+
+    override def release = state.modify {
+      case Done => Done -> IO.unit
+      case Live(1, signal) => Done -> signal.complete(()).void // count is 0, latch is complete
+      case Live(n, signal) => Live(n - 1, signal) -> IO.unit // decrement count by 1
+    }.flatten.uncancelable
+  }
 }

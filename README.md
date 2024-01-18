@@ -22,6 +22,10 @@ graph BT
     MonadError --> ApplicativeError
     MonadCancel --> MonadError
     Spawn --> MonadCancel
+    Sync --> MonadCancel
+    Sync --> Defer
+    Concurrent --> Spawn
+    Temporal --> Concurrent
     
     
 ```

@@ -1,7 +1,7 @@
 package part5polymorphic
 
 import cats.effect.{Concurrent, IO, IOApp, Temporal}
-import utils._
+import utils.general.customDebug
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
@@ -9,17 +9,16 @@ object PolymorphicTemporalSuspension extends IOApp.Simple {
 
   // Temporal describes time blocking effects
   trait MyTemporal[F[_]] extends Concurrent[F] {
-    def sleep(time: FiniteDuration): F[Unit] // semantically blocks this fiber for a specified time - this is the fundemetal operation of the typeclass
+    def sleep(time: FiniteDuration): F[Unit] // semantically blocks this fiber for a specified time - this is the fundamental operation of the typeclass
   }
 
-  // abilites: pure, map/flatMap, raiseError, uncancelable, start, ref/deferred, +sleep --- inherited from other Type classes
+  // abilities: pure, map/flatMap, raiseError, uncancelable, start, ref/deferred, +sleep --- inherited from other Type classes
   val temporalIO = Temporal[IO] // given Temporal[IO] in scope
-  val chainOfEffects = IO("Loading...").debug *> IO.sleep(1.second) *> IO("Game ready!").debug
-  val chainOfEffects_v2 = temporalIO.pure("Loading...").debug *> temporalIO.sleep(1.second) *> temporalIO.pure("Game ready!").debug // same
+  val chainOfEffects = IO("Loading...") *> IO.sleep(1.second) *> IO("Game ready!")
+  val chainOfEffects_v2 = temporalIO.pure("Loading...") *> temporalIO.sleep(1.second) *> temporalIO.pure("Game ready!") // same
 
   /**
-   * Exercise: generalise the timeout functionality
-   *
+   * Exercise: generalize the timeout functionality
    */
 
   import cats.syntax.flatMap._

@@ -54,7 +54,6 @@ object Refs extends IOApp.Simple {
   // why: concurrent + thread-safe reads/writes over shared values, in a purely functional way
 
   import cats.syntax.parallel._
-  import utils._
 
   // Some non thread safe code
   def demoConcurrentWorkImpure(): IO[Unit] = {
@@ -63,9 +62,9 @@ object Refs extends IOApp.Simple {
     def task(workload: String): IO[Unit] = {
       val wordCount = workload.split(" ").length
       for {
-        _ <- IO(s"Counting words for '$workload': $wordCount'").debug
+        _ <- IO(s"Counting words for '$workload': $wordCount'")
         newCount <- IO(count + wordCount)
-        _ <- IO(s"New total: $newCount").debug
+        _ <- IO(s"New total: $newCount")
         _ <- IO(count += wordCount)
       } yield ()
     }
@@ -88,9 +87,9 @@ object Refs extends IOApp.Simple {
       val wordCount = workload.split(" ").length
 
       for {
-        _ <- IO(s"Counting words for '$workload': $wordCount'").debug
+        _ <- IO(s"Counting words for '$workload': $wordCount'")
         newCount <- total.updateAndGet(currentCount => currentCount + wordCount)
-        _ <- IO(s"New total: $newCount").debug
+        _ <- IO(s"New total: $newCount")
       } yield ()
     }
 
@@ -103,21 +102,21 @@ object Refs extends IOApp.Simple {
   }
 
   /*
-  Excercises - refactor impure program into a pure program
+  Exercises - refactor impure program into a pure program
    */
   def tickingClockImpure(): IO[Unit] = {
     var ticks: Long = 0L
 
     def tickingClock: IO[Unit] = for {
       _ <- IO.sleep(1.second)
-      _ <- IO(System.currentTimeMillis()).debug
+      _ <- IO(System.currentTimeMillis())
       _ <- IO(ticks += 1) // not thread safe -- shared state
       _ <- tickingClock
     } yield ()
 
     def printTicks: IO[Unit] = for {
       _ <- IO.sleep(5.seconds)
-      _ <- IO(s"TICKS: $ticks").debug
+      _ <- IO(s"TICKS: $ticks")
       _ <- printTicks
     } yield ()
 
@@ -129,7 +128,7 @@ object Refs extends IOApp.Simple {
   def tickingClockPure(): IO[Unit] = {
     def tickingClock(ticks: Ref[IO, Int]): IO[Unit] = for {
       _ <- IO.sleep(1.second)
-      _ <- IO(System.currentTimeMillis()).debug
+      _ <- IO(System.currentTimeMillis())
       _ <- ticks.update(_ + 1) // thread safe effect
       _ <- tickingClock(ticks)
     } yield ()
@@ -137,7 +136,7 @@ object Refs extends IOApp.Simple {
     def printTicks(ticks: Ref[IO, Int]): IO[Unit] = for {
       _ <- IO.sleep(5.seconds)
       t <- ticks.get
-      _ <- IO(s"TICKS: $t").debug
+      _ <- IO(s"TICKS: $t")
       _ <- printTicks(ticks)
     } yield ()
 
@@ -154,7 +153,7 @@ object Refs extends IOApp.Simple {
     def tickingClock: IO[Unit] = for {
       t <- ticks // ticks will give you a NEW Ref -- since it is reinitialised
       _ <- IO.sleep(1.second)
-      _ <- IO(System.currentTimeMillis()).debug
+      _ <- IO(System.currentTimeMillis())
       _ <- t.update(_ + 1) // thread safe effect
       _ <- tickingClock
     } yield ()
@@ -163,7 +162,7 @@ object Refs extends IOApp.Simple {
       t <- ticks // ticks will give you a NEW Ref
       _ <- IO.sleep(5.seconds)
       currentTicks <- t.get
-      _ <- IO(s"TICKS: $currentTicks").debug
+      _ <- IO(s"TICKS: $currentTicks")
       _ <- printTicks
     } yield ()
 

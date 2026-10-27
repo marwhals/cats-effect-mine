@@ -3,12 +3,12 @@
   <component name="ScalaSbtSettings">
     <option name="linkedExternalProjectsSettings">
       <SbtProjectSettings>
-        <option name="converterVersion" value="1" />
+        <option name="converterVersion" value="2" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
         <option name="modules">
           <set>
-            <option value="$PROJECT_DIR$" />
-            <option value="$PROJECT_DIR$/project" />
+            <option value="C:\Users\Marjan\Documents\JVM-Scala-Projects\cats-effect-mine" />
+            <option value="C:\Users\Marjan\Documents\JVM-Scala-Projects\cats-effect-mine\project" />
           </set>
         </option>
         <option name="sbtVersion" value="1.8.3" />

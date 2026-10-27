@@ -12,22 +12,20 @@ object Fibers extends IOApp.Simple {
   val meaningOfLife = IO.pure(42)
   val favLang = IO.pure("Scala")
 
-  import utils._
-
   def sameThreadIOs() = for {
-    _ <- meaningOfLife.debug
-    _ <- favLang.debug
+    _ <- meaningOfLife
+    _ <- favLang
   } yield ()
 
   // introduce the Fiber primitive - data strucutre that will run on a thread managed by the CE runtime
   def createFiber: Fiber[IO, Throwable, String] = ??? // Impossible to create fibers on their own
 
   // fiber is not actually started, but the fiber allocation is wrapped in another effect
-  val aFiber: IO[Fiber[IO, Throwable, Int]] = meaningOfLife.debug.start
+  val aFiber: IO[Fiber[IO, Throwable, Int]] = meaningOfLife.start
 
   def differentThreadIOs() = for {
     _ <- aFiber
-    _ <- favLang.debug
+    _ <- favLang
   } yield ()
 
   // joining a fiber
@@ -56,13 +54,13 @@ object Fibers extends IOApp.Simple {
   } yield result
 
   def testCancel() = {
-    val task = IO("starting").debug >> IO.sleep(1.second) >> IO("done").debug
+    val task = IO("starting") >> IO.sleep(1.second) >> IO("done")
     // onCancel is a "finalizer", allowing you to free up resources in case you get canceled
-    val taskWithCancellationHandler = task.onCancel(IO("I'm being cancelled!").debug.void)
+    val taskWithCancellationHandler = task.onCancel(IO("I'm being cancelled!").void)
 
     for {
       fib <- taskWithCancellationHandler.start // on a separate thread
-      _ <- IO.sleep(500.millis) >> IO("cancelling").debug
+      _ <- IO.sleep(500.millis) >> IO("cancelling")
       _ <- fib.cancel
       result <- fib.join
     } yield result
@@ -92,7 +90,7 @@ object Fibers extends IOApp.Simple {
   //1
   def processResultsFromFiber[A](io: IO[A]): IO[A] = {
     val ioResult = for {
-      fib <- io.debug.start
+      fib <- io.start
       result <- fib.join
     } yield result
 
@@ -104,7 +102,7 @@ object Fibers extends IOApp.Simple {
   }
 
   def testEx1() = {
-    val aComputation = IO("starting").debug >> IO.sleep(1.second) >> IO("done!").debug >> IO(42)
+    val aComputation = IO("starting") >> IO.sleep(1.second) >> IO("done!") >> IO(42)
     processResultsFromFiber(aComputation).void
   }
 
@@ -129,9 +127,9 @@ object Fibers extends IOApp.Simple {
   }
 
   def testEx2() = {
-    val firstIO = IO.sleep(2.seconds) >> IO(1).debug
-    val secondIO = IO.sleep(3.seconds) >> IO(2).debug
-    tupleIOs(firstIO, secondIO).debug.void
+    val firstIO = IO.sleep(2.seconds) >> IO(1)
+    val secondIO = IO.sleep(3.seconds) >> IO(2)
+    tupleIOs(firstIO, secondIO).void
   }
 
   //3
@@ -150,18 +148,18 @@ object Fibers extends IOApp.Simple {
   }
 
   def testEx3() = {
-    val aComputation = IO("starting").debug >> IO.sleep(1.second) >> IO("done!").debug >> IO(42)
-    timeout(aComputation, 500.millis).debug.void
+    val aComputation = IO("starting") >> IO.sleep(1.second) >> IO("done!") >> IO(42)
+    timeout(aComputation, 500.millis).void
   }
 
   override def run = {
     //    sameThreadIOs()
     //    differentThreadIOs()
     //    runOnSomeOtherThread(meaningOfLife) // IO(Succeeded(IO(42)))
-    //      .debug.void
+    //      .void
     //    throwOnAnotherThread()
-    //      .debug.void
-    //    testCancel().debug.void
+    //      .void
+    //    testCancel().void
     //    testEx1()
     //    testEx2()
     testEx3()

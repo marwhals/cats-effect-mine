@@ -1,13 +1,13 @@
 ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.11"
+ThisBuild / scalaVersion := "3.9.0"
 
 lazy val root = (project in file("."))
   .settings(
     name := "cats-effect-mine",
 
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-effect" % "3.2.0",
+      "org.typelevel" %% "cats-effect" % "3.7.1",
     )
 
   )

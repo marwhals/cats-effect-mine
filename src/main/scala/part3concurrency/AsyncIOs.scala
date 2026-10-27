@@ -1,7 +1,6 @@
 package part3concurrency
 
 import cats.effect.{IO, IOApp}
-import utils._
 
 import java.util.concurrent.Executors
 import scala.concurrent.duration.DurationInt
@@ -92,19 +91,19 @@ object AsyncIOs extends IOApp.Simple {
           val result = computeMeaningOfLifeEither()
           cb(result)
         }
-      }.as(Some(IO("Cancelled!").debug.void))
+      }.as(Some(IO("Cancelled!").void))
     }
 
     for {
       fib <- asyncMeaningOfLifeIO_v2.start
-      _ <- IO.sleep(500.millis) >> IO("cancelling...").debug >> fib.cancel
+      _ <- IO.sleep(500.millis) >> IO("cancelling...") >> fib.cancel
       _ <- fib.join
     } yield ()
   }
 
   override def run = {
-    //    asyncMolIO.debug >> IO(threadPool.shutdown())
-//    asyncMolIO_v2.debug >> IO(threadPool.shutdown())
-    demoAsyncCancellation().debug >> IO(threadPool.shutdown())
+    //    asyncMolIO >> IO(threadPool.shutdown())
+//    asyncMolIO_v2 >> IO(threadPool.shutdown())
+    demoAsyncCancellation() >> IO(threadPool.shutdown())
   }
 }

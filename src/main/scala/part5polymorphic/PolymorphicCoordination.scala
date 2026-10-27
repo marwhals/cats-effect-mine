@@ -2,20 +2,21 @@ package part5polymorphic
 
 import cats.effect._
 import cats.effect.kernel.Deferred
-import utils.general._
+import utils.general.customDebug
+import utils.general.unsafeSleep
 
 import scala.concurrent.duration.DurationInt
 
 /**
  * Takeaways/ summary
- * --- Concurrent == the abilty to create concurrency primitives
- * -- ref an deferred are the basic primitives
+ * --Concurrent == the ability to create concurrency primitives
+ * -- ref and deferred are the basic primitives
  * -- can create everything else in terms of them
  */
 
 object PolymorphicCoordination extends IOApp.Simple {
 
-  // Concurrent - describe any concurrent primtive using - Ref + Deferred for ANY effect type
+  // Concurrent - describe any concurrent primitive using - Ref + Deferred for ANY effect type
   trait MyConcurrent[F[_]] extends Spawn[F] { //describe the creation of any concurrency primitive
     def ref[A](a: A): F[Ref[F, A]]
     def deferred[A]: F[Deferred[F, A]]
@@ -30,15 +31,15 @@ object PolymorphicCoordination extends IOApp.Simple {
   // ----- concrete timer for IO -----
   def timer(): IO[Unit] = {
     def timerNotification(signal: Deferred[IO, Unit]) = for {
-      _ <- IO("timer running on some other fiber, waiting...").debug
+      _ <- IO("timer running on some other fiber, waiting...")
       _ <- signal.get
-      _ <- IO("time is up").debug
+      _ <- IO("time is up")
     } yield ()
 
     def tickingClock(counter: Ref[IO, Int], signal: Deferred[IO, Unit]): IO[Unit] = for {
       _ <- IO.sleep(1.second)
       count <- counter.updateAndGet(_ + 1)
-      _ <- IO(count).debug
+      _ <- IO(count)
       _ <- if (count >= 10) signal.complete(())
       else tickingClock(counter, signal)
     } yield ()
@@ -61,17 +62,16 @@ object PolymorphicCoordination extends IOApp.Simple {
 
   def polymorphicTimer[F[_]](implicit concurrent: Concurrent[F]): F[Unit] = {
     def timerNotification(signal: Deferred[F, Unit]) = for {
-      _ <- concurrent.pure("timer running on some other fiber, waiting...").debug
+      _ <- concurrent.pure("timer running on some other fiber, waiting...")
       _ <- signal.get
-      _ <- concurrent.pure("time is up").debug
+      _ <- concurrent.pure("time is up")
     } yield ()
 
     def tickingClock(counter: Ref[F, Int], signal: Deferred[F, Unit]): F[Unit] = for {
       _ <- unsafeSleep(1.second)
       count <- counter.updateAndGet(_ + 1)
-      _ <- concurrent.pure(count).debug
-      _ <- if (count >= 10) signal.complete(())
-      else tickingClock(counter, signal)
+      _ <- concurrent.pure(count)
+      _ <- if (count >= 10) signal.complete(()).void else tickingClock(counter, signal)
     } yield ()
 
     for {

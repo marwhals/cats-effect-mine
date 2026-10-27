@@ -81,7 +81,7 @@ IO Parallelism
 - synchronisation and coordination are automatic
 ```scala
 import cats.syntax.parallel.catsSyntaxParallelSequence._
-val goalInLifeParallel: IO[String] = (meaningOfLife.debug, favLang.debug).parMapN(_ + _)
+val goalInLifeParallel: IO[String] = (meaningOfLife, favLang).parMapN(_ + _)
 ```
 
 IO Traversal

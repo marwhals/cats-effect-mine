@@ -8,7 +8,7 @@ import cats.effect.std.CyclicBarrier
 
 import scala.util.Random
 import scala.concurrent.duration._
-import utils._
+import utils.general.customDebug
 import cats.syntax.parallel._
 
 object CyclicBarriers extends IOApp.Simple {
@@ -27,18 +27,18 @@ object CyclicBarriers extends IOApp.Simple {
 
   // example: signing up for a social network just about to be launched
   def createUser(id: Int, barrier: CyclicBarrier[IO]): IO[Unit] = for {
-    _ <- IO.sleep((Random.nextDouble * 500).toInt.millis)
-    _ <- IO(s"[user $id] Signing up for the waitlist for the new social network...").debug
-    _ <- IO.sleep((Random.nextDouble * 1500).toInt.millis)
-    _ <- IO(s"[user $id] On the waitlist now....").debug
+    _ <- IO.sleep((Random.nextDouble() * 500).toInt.millis)
+    _ <- IO(s"[user $id] Signing up for the waitlist for the new social network...")
+    _ <- IO.sleep((Random.nextDouble() * 1500).toInt.millis)
+    _ <- IO(s"[user $id] On the waitlist now....")
     _ <- barrier.await // block the fiber when there are exactly N users waiting
-    _ <- IO(s"[user $id] The social network is now available").debug
+    _ <- IO(s"[user $id] The social network is now available")
   } yield ()
 
   def openNetwork(): IO[Unit] = for {
-    _ <- IO("[announcer] Social network is up for registration. Waiting for 10 users").debug
+    _ <- IO("[announcer] Social network is up for registration. Waiting for 10 users")
     barrier <- CyclicBarrier[IO](10)
-    _ <- (1 to 7).toList.parTraverse(id => createUser(id, barrier))
+    _ <- (1 `to` 7).toList.parTraverse(id => createUser(id, barrier))
   } yield ()
 
   override def run = {

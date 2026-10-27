@@ -7,7 +7,6 @@ import cats.effect.{IO, IOApp, Ref, Concurrent}
 
 import scala.util.Random
 import scala.concurrent.duration._
-import utils._
 import cats.syntax.parallel._
 
 import scala.collection.immutable.Queue
@@ -155,21 +154,21 @@ object MutexPlayground extends IOApp.Simple {
   def createNonLockingTask(id: Int): IO[Int] = for {
     _ <- IO(s"[task $id] working...")
     res <- criticalTask()
-    _ <- IO(s"[task $id] got result: $res").debug
+    _ <- IO(s"[task $id] got result: $res")
   } yield res
 
   def demoNonLockingTasks(): IO[List[Int]] = (1 to 10).toList.parTraverse(id => createNonLockingTask(id))
 
   def createLockingTask(id: Int, mutex: Mutex): IO[Int] = for {
-    _ <- IO(s"[task $id] waiting for permission...").debug
+    _ <- IO(s"[task $id] waiting for permission...")
     _ <- mutex.acquire // blocks if the mutex has been acquired by some other fiber
     // critical section
-    _ <- IO(s"[task $id] working...").debug
+    _ <- IO(s"[task $id] working...")
     res <- criticalTask() // Results are produced one by one
-    _ <- IO(s"[task $id] got result: $res").debug
+    _ <- IO(s"[task $id] got result: $res")
     // critical section end
     _ <- mutex.release
-    _ <- IO(s"[task $id] lock removed.").debug
+    _ <- IO(s"[task $id] lock removed.")
   } yield res
 
   def demoLockingTasks() = for {
@@ -181,7 +180,7 @@ object MutexPlayground extends IOApp.Simple {
   def createCancellingTask(id: Int, mutex: Mutex): IO[Int] = {
     if (id % 2 == 0) createLockingTask(id, mutex)
     else for {
-      fib <- createLockingTask(id, mutex).onCancel(IO(s"[task $id] received cancellation!").debug.void).start
+      fib <- createLockingTask(id, mutex).onCancel(IO(s"[task $id] received cancellation!").void).start
       _ <- IO.sleep(2.seconds) >> fib.cancel
       out <- fib.join
       result <- out match {
@@ -200,6 +199,6 @@ object MutexPlayground extends IOApp.Simple {
   override def run = {
 //    demoNonLockingTasks().debug.void
 //    demoLockingTasks().debug.void
-    demoCancellingTasks().debug.void
+    demoCancellingTasks().void
   }
 }

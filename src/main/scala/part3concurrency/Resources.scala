@@ -10,12 +10,10 @@ object Resources extends IOApp.Simple {
 
   // use case: manage a connection lifecycle
 
-  import utils._
-
   class Connection(url: String) {
-    def open(): IO[String] = IO(s"""opening connection to $url""").debug
+    def open(): IO[String] = IO(s"""opening connection to $url""")
 
-    def close(): IO[String] = IO(s"""closing connection to $url""").debug
+    def close(): IO[String] = IO(s"""closing connection to $url""")
   }
 
   val asyncFetchUrl = for {
@@ -56,7 +54,7 @@ object Resources extends IOApp.Simple {
     IO(new Scanner(new FileReader(new File(path))))
 
   def readLineByLine(scanner: Scanner): IO[Unit] =
-    if (scanner.hasNextLine) IO(scanner.nextLine()).debug >> IO.sleep(100.millis) >> readLineByLine(scanner)
+    if (scanner.hasNextLine) IO(scanner.nextLine()) >> IO.sleep(100.millis) >> readLineByLine(scanner)
     else IO.unit
 
   def bracketReadFile(path: String): IO[Unit] =
@@ -64,7 +62,7 @@ object Resources extends IOApp.Simple {
       openFileScanner(path).bracket { scanner =>
         readLineByLine(scanner)
       } { scanner => // What to do in the unhappy path
-        IO(s"closing file at $path").debug >> IO(scanner.close())
+        IO(s"closing file at $path") >> IO(scanner.close())
       }
 
   /**
@@ -80,16 +78,16 @@ object Resources extends IOApp.Simple {
       scanner =>
         IO(new Connection(scanner.nextLine()))
           .bracket { conn =>
-            conn.open().debug >> IO.never
+            conn.open() >> IO.never
           } { conn =>
-            conn.close().debug.void
+            conn.close().void
           }
     } { scanner =>
-      IO("closing file").debug >> IO(scanner.close())
+      IO("closing file") >> IO(scanner.close())
     }
 
 
-  val connectionResource = Resource.make(IO(new Connection("connection.com")))(conn => conn.close().debug.void) // Compared to bracket we only have resource acquisition and release. Not usage
+  val connectionResource = Resource.make(IO(new Connection("connection.com")))(conn => conn.close().void) // Compared to bracket we only have resource acquisition and release. Not usage
   // can use this resource later in the code
 
   val resourceFetchUrl = for {
@@ -99,8 +97,8 @@ object Resources extends IOApp.Simple {
 
   // resources are equivalent to brackets
   val simpleResource = IO("some resource")
-  val usingResource: String => IO[String] = string => IO(s"using the string: $string").debug
-  val releaseResource: String => IO[Unit] = string => IO(s"finalizing the string: $string").debug.void
+  val usingResource: String => IO[String] = string => IO(s"using the string: $string")
+  val releaseResource: String => IO[Unit] = string => IO(s"finalizing the string: $string").void
 
   // see below for the gist of both
   val usingResourceWithBracket = simpleResource.bracket(usingResource)(releaseResource)
@@ -112,7 +110,7 @@ object Resources extends IOApp.Simple {
    *
    */
   def getResourceFromFile(path: String) = Resource.make(openFileScanner(path)) { scanner =>
-    IO(s"closing file at $path").debug >> IO(scanner.close())
+    IO(s"closing file at $path") >> IO(scanner.close())
   }
 
   def resourceReadFile(path: String) =
@@ -130,9 +128,9 @@ object Resources extends IOApp.Simple {
   // nested resources - see below for for comprehension version
   def connFromConfResource(path: String) =
     Resource.make {
-      IO("opening file").debug >> openFileScanner(path)
+      IO("opening file") >> openFileScanner(path)
     } { scanner =>
-      IO("closing file").debug >> IO(scanner.close())
+      IO("closing file") >> IO(scanner.close())
     }.flatMap { scanner =>
       Resource.make {
         IO(new Connection(scanner.nextLine()))
@@ -144,20 +142,20 @@ object Resources extends IOApp.Simple {
   val openConnection = connFromConfResource("src/main/resources/connection.txt").use(conn => conn.open() >> IO.never)
   val canceledConnection = for {
     fib <- openConnection.start
-    _ <- IO.sleep(1.second) >> IO("cancelling!").debug >> fib.cancel
+    _ <- IO.sleep(1.second) >> IO("cancelling!") >> fib.cancel
   } yield ()
   // connection + file will close automatically
   // equivalent connection logic using for comprehensions
   def connFromConfResourceClean(path: String) = for {
-    scanner <- Resource.make(IO("opening file").debug >> openFileScanner(path))(scanner => IO("closing file").debug >> IO(scanner.close()))
+    scanner <- Resource.make(IO("opening file") >> openFileScanner(path))(scanner => IO("closing file") >> IO(scanner.close()))
     conn <- Resource.make(IO(new Connection(scanner.nextLine())))(conn => conn.close().void)
   } yield conn
 
-  // finalizer - releasing of resources - these can be attatched to regular IOsval ioWithFinalizer = IO("some resource").debug.guarantee(IO("freeing resource").debug.void)
-    val ioWithFinalizer_v2 = IO("some resource").debug.guaranteeCase {
-      case Succeeded(fa) => fa.flatMap(result => IO(s"releasing resource: $result").debug).void
-      case Errored(e) => IO("nothing to release").debug.void
-      case Canceled() => IO("resource got canceled, releasing what's left").debug.void
+  // finalizer - releasing of resources - these can be attatched to regular IOsval ioWithFinalizer = IO("some resource").guarantee(IO("freeing resource").void)
+    val ioWithFinalizer_v2 = IO("some resource").guaranteeCase {
+      case Succeeded(fa) => fa.flatMap(result => IO(s"releasing resource: $result")).void
+      case Errored(e) => IO("nothing to release").void
+      case Canceled() => IO("resource got canceled, releasing what's left").void
     }
 
   //Take away ----- reosurces can be composed using map/ flatMap and for-comprehensions

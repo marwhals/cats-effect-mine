@@ -5,7 +5,7 @@ import cats.effect.std.CountDownLatch
 import cats.effect.{IO, IOApp, Ref, Resource}
 import cats.syntax.parallel._
 import cats.syntax.traverse._
-import utils._
+import utils.general.customDebug
 
 import java.io.{File, FileWriter}
 import scala.concurrent.duration.DurationInt
@@ -21,30 +21,30 @@ object CountdownLatches extends IOApp.Simple {
    */
 
   def announcer(latch: CountDownLatch[IO]): IO[Unit] = for {
-    _ <- IO("Starting race shortly...").debug >> IO.sleep(2.seconds)
-    _ <- IO("5...").debug >> IO.sleep(1.second)
+    _ <- IO("Starting race shortly...") >> IO.sleep(2.seconds)
+    _ <- IO("5...") >> IO.sleep(1.second)
     _ <- latch.release
-    _ <- IO("4...").debug >> IO.sleep(1.second)
+    _ <- IO("4...") >> IO.sleep(1.second)
     _ <- latch.release
-    _ <- IO("3...").debug >> IO.sleep(1.second)
+    _ <- IO("3...") >> IO.sleep(1.second)
     _ <- latch.release
-    _ <- IO("2...").debug >> IO.sleep(1.second)
+    _ <- IO("2...") >> IO.sleep(1.second)
     _ <- latch.release
-    _ <- IO("1...").debug >> IO.sleep(1.second)
+    _ <- IO("1...") >> IO.sleep(1.second)
     _ <- latch.release // gun firing --- fibers all start running
-    _ <- IO("GO GO GO!").debug
+    _ <- IO("GO GO GO!")
   } yield ()
 
   def createRunner(id: Int, latch: CountDownLatch[IO]): IO[Unit] = for {
-    _ <- IO(s"[runner $id] waiting for signal...").debug
+    _ <- IO(s"[runner $id] waiting for signal...")
     _ <- latch.await // block this fiber until the count reaches 0
-    _ <- IO(s"[runner $id] RUNNING!").debug
+    _ <- IO(s"[runner $id] RUNNING!")
   } yield ()
 
   def sprint(): IO[Unit] = for {
     latch <- CountDownLatch[IO](5)
     announcerFib <- announcer(latch).start // start the latch
-    _ <- (1 to 10).toList.parTraverse(id => createRunner(id, latch)) // create the fibers
+    _ <- (1 `to` 10).toList.parTraverse(id => createRunner(id, latch)) // create the fibers
     _ <- announcerFib.join
   } yield ()
 
@@ -100,18 +100,18 @@ object CountdownLatches extends IOApp.Simple {
   def downloadFile(filename: String, destFolder: String): IO[Unit] = for {
     n <- FileServer.getNumChunks
     latch <- CDLatch(n)
-    _ <- IO(s"Download started on $n fibers.").debug
+    _ <- IO(s"Download started on $n fibers.")
     _ <- (0 until n).toList.parTraverse(id => createFileDownloaderTask(id, latch, filename, destFolder))
     _ <- latch.await // wait until countdown is 0
     _ <- (0 until n).toList.traverse(id => appendFileContents(s"$destFolder/$filename.part$id", s"$destFolder/$filename"))
   } yield ()
 
   def createFileDownloaderTask(id: Int, latch: CDLatch, filename: String, destFolder: String): IO[Unit] = for {
-    _ <- IO(s"[task $id] downloading chunk...").debug
-    _ <- IO.sleep((Random.nextDouble * 1000).toInt.millis)
+    _ <- IO(s"[task $id] downloading chunk...")
+    _ <- IO.sleep((Random.nextDouble() * 1000).toInt.millis)
     chunk <- FileServer.getFileChunk(id)
     _ <- writeToFile(s"$destFolder/$filename.part$id", chunk)
-    _ <- IO(s"[task $id] chunk download complete").debug
+    _ <- IO(s"[task $id] chunk download complete")
     _ <- latch.release // decrease the count by one once the download has completed
   } yield ()
 

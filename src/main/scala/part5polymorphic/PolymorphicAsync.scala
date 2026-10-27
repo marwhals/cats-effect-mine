@@ -4,7 +4,6 @@ import cats.effect.{Async, Concurrent, IO, IOApp, Sync, Temporal}
 
 import java.util.concurrent.Executors
 import scala.concurrent.ExecutionContext
-import utils._
 
 
 object PolymorphicAsync extends IOApp.Simple {
@@ -45,7 +44,7 @@ object PolymorphicAsync extends IOApp.Simple {
         println(s"[${Thread.currentThread().getName}] Computing an async MOL")
         cb(Right(42))
       }
-    }.as(Some(IO("Cancelled!").debug.void)) // <-- finalizer in case the computation gets cancelled
+    }.as(Some(IO("Cancelled!").void)) // <-- finalizer in case the computation gets canceled
   }
 
   val asyncMeaningOfLife_v2: IO[Int] = asyncIO.async_ { (cb: Callback[Int]) =>
@@ -62,11 +61,11 @@ object PolymorphicAsync extends IOApp.Simple {
         println(s"[${Thread.currentThread().getName}] Computing an async MOL")
         cb(Right(42))
       }
-    }.as(Some(IO("Cancelled!").debug.void)) // <-- finalizer in case the computation gets cancelled
+    }.as(Some(IO("Cancelled!").void)) // <-- finalizer in case the computation gets canceled
   } // same
 
   val myExecutionContext = ExecutionContext.fromExecutorService(threadPool)
-  val asyncMeaningOfLife_v3 = asyncIO.evalOn(IO(42).debug, myExecutionContext).guarantee(IO(threadPool.shutdown()))
+  val asyncMeaningOfLife_v3 = asyncIO.evalOn(IO(42), myExecutionContext).guarantee(IO(threadPool.shutdown()))
 
   // never
   val neverIO = asyncIO.never

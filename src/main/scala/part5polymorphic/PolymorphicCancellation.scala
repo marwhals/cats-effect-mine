@@ -6,7 +6,7 @@ import cats.effect.{IO, IOApp, MonadCancel, Poll}
 import cats.syntax.flatMap._
 import cats.syntax.functor._
 import cats.{Applicative, Monad}
-import utils.general._
+import utils.general.customDebug
 
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
@@ -84,30 +84,30 @@ object PolymorphicCancellation extends IOApp.Simple {
   def unsafeSleep[F[_], E](duration: FiniteDuration)(implicit mc: MonadCancel[F, E]): F[Unit] = mc.pure(Thread.sleep(duration.toMillis))
 
   def inputPassword[F[_], E](implicit mc: MonadCancel[F, E]): F[String] = for {
-      _ <- mc.pure("Input password:").debug
-      _ <- mc.pure("(typing password)").debug
+      _ <- mc.pure("Input password:")
+      _ <- mc.pure("(typing password)")
       _ <- unsafeSleep[F, E](5.seconds)
       pw <- mc.pure("myPassword123")
     } yield pw
 
   def verifyPassword[F[_], E](pw: String)(implicit mc: MonadCancel[F, E]): F[Boolean] = for {
-      _ <- mc.pure("verifying...").debug
+      _ <- mc.pure("verifying...")
       _ <- unsafeSleep[F, E](2.seconds)
       check <- mc.pure(pw == "myPassword123")
     } yield check
 
   def authFlow[F[_], E](implicit mc: MonadCancel[F, E]): F[Unit] = mc.uncancelable { poll =>
       for {
-        pw <- poll(inputPassword).onCancel(mc.pure("Authentication timed out. Try again later.").debug.void) // this is cancelable
+        pw <- poll(inputPassword).onCancel(mc.pure("Authentication timed out. Try again later.").void) // this is cancelable
         verified <- verifyPassword(pw) // this is NOT cancelable
-        _ <- if (verified) mc.pure("Authentication successful.").debug // this is NOT cancelable
-        else mc.pure("Authentication failed.").debug
+        _ <- if (verified) mc.pure("Authentication successful.") // this is NOT cancelable
+        else mc.pure("Authentication failed.")
       } yield ()
     }
 
   val authProgram: IO[Unit] = for {
       authFib <- authFlow[IO, Throwable].start
-      _ <- IO.sleep(3.seconds) >> IO("Authentication timeout, attempting cancel...").debug >> authFib.cancel
+      _ <- IO.sleep(3.seconds) >> IO("Authentication timeout, attempting cancel...") >> authFib.cancel
       _ <- authFib.join
     } yield ()
 

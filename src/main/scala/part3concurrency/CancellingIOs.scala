@@ -3,10 +3,9 @@ package part3concurrency
 import cats.effect.{IO, IOApp}
 
 import scala.concurrent.duration.DurationInt
+import utils.customDebug
 
 object CancellingIOs extends IOApp.Simple {
-
-  import utils._
 
   /*
     Cancelling IOs
@@ -14,15 +13,15 @@ object CancellingIOs extends IOApp.Simple {
     - IO.race & other APIs
     - manual cancellation
    */
-  val chainOfIOs: IO[Int] = IO("waiting").debug >> IO.canceled >> IO(42).debug // Whatever comes after IO.cancelled will no be evaluated
+  val chainOfIOs: IO[Int] = IO("waiting") >> IO.canceled >> IO(42) // Whatever comes after IO.cancelled will no be evaluated
 
   //uncancellable - a wrapper over an IO which prevents it from being cancelled by another fiber
   // example - payment process must not be cancelled
   val specialPaymentSystem = (
-    IO("Payment running, don't cancel me...").debug >>
+    IO("Payment running, don't cancel me...") >>
       IO.sleep(1.second) >>
-      IO("Payment completed.").debug
-    ).onCancel(IO("MEGA CANCEL OF DOOM!").debug.void)
+      IO("Payment completed.")
+    ).onCancel(IO("MEGA CANCEL OF DOOM!").void)
 
 
   val cancellationOfDoom = for {
@@ -37,7 +36,7 @@ object CancellingIOs extends IOApp.Simple {
 
   val noCancellationOfDoom = for {
     fib <- atomicPayment.start
-    _ <- IO.sleep(500.millis) >> IO("attempting cancellation...").debug >> fib.cancel
+    _ <- IO.sleep(500.millis) >> IO("attempting cancellation...") >> fib.cancel
     _ <- fib.join
   } yield ()
 
@@ -53,21 +52,21 @@ object CancellingIOs extends IOApp.Simple {
   - verify password, CANNOT be cancelled once it's started
    */
 
-  val inputPassword = IO("Input password:").debug >> IO("(typing password)").debug >> IO.sleep(5.seconds) >> IO("password123")
-  val verifyPassword = (pw: String) => IO("verifying...").debug >> IO.sleep(2.seconds) >> IO(pw == "password123")
+  val inputPassword = IO("Input password:") >> IO("(typing password)") >> IO.sleep(5.seconds) >> IO("password123")
+  val verifyPassword = (pw: String) => IO("verifying...") >> IO.sleep(2.seconds) >> IO(pw == "password123")
 
   val authFlow: IO[Unit] = IO.uncancelable { poll =>
     for {
-      pw <- poll(inputPassword).onCancel(IO("Authentication timed out. Try again later.").debug.void) // this is cancelable i.e poll is unmasking the effect/IO inputPassword
+      pw <- poll(inputPassword).onCancel(IO("Authentication timed out. Try again later.").void) // this is cancelable i.e poll is unmasking the effect/IO inputPassword
       verified <- verifyPassword(pw) // this is NOT cancelable
-      _ <- if (verified) IO("Authentication successful.").debug // this is NOT cancelable
-      else IO("Authentication failed.").debug
+      _ <- if (verified) IO("Authentication successful.") // this is NOT cancelable
+      else IO("Authentication failed.")
     } yield ()
   }
 
   val authProgram = for {
     authFib <- authFlow.start
-    _ <- IO.sleep(3.seconds) >> IO("Authentication timeout, attempting cancel...").debug >> authFib.cancel
+    _ <- IO.sleep(3.seconds) >> IO("Authentication timeout, attempting cancel...") >> authFib.cancel
     _ <- authFib.join
   } yield ()
 
@@ -80,29 +79,29 @@ object CancellingIOs extends IOApp.Simple {
     Exercises/ illustration of cancellable and poll
    */
   // 1
-  val cancelBeforeMol = IO.canceled >> IO(42).debug
-  val uncancelableMol = IO.uncancelable(_ => IO.canceled >> IO(42).debug)
+  val cancelBeforeMol = IO.canceled >> IO(42)
+  val uncancelableMol = IO.uncancelable(_ => IO.canceled >> IO(42))
   // uncancelable will eliminate ALL cancel points - use poll to introduce them
 
 
   // 2
   val invincibleAuthProgram = for {
     authFib <- IO.uncancelable(_ => authFlow).start
-    _ <- IO.sleep(1.seconds) >> IO("Authentication timeout, attempting cancel...").debug >> authFib.cancel
+    _ <- IO.sleep(1.seconds) >> IO("Authentication timeout, attempting cancel...") >> authFib.cancel
     _ <- authFib.join
   } yield ()
 
   // 3
   def threeStepProgram(): IO[Unit] = {
     val sequence = IO.uncancelable { poll =>
-      poll(IO("cancelable").debug >> IO.sleep(1.second) >> IO("cancelable end").debug) >>
-        IO("uncancelable").debug >> IO.sleep(1.second) >> IO("uncancelable end").debug >>
-        poll(IO("second cancelable").debug >> IO.sleep(1.second) >> IO("second cancelable end").debug)
+      poll(IO("cancelable") >> IO.sleep(1.second) >> IO("cancelable end")) >>
+        IO("uncancelable") >> IO.sleep(1.second) >> IO("uncancelable end") >>
+        poll(IO("second cancelable") >> IO.sleep(1.second) >> IO("second cancelable end"))
     }
 
     for {
       fib <- sequence.start
-      _ <- IO.sleep(1500.millis) >> IO("CANCELING").debug >> fib.cancel
+      _ <- IO.sleep(1500.millis) >> IO("CANCELING") >> fib.cancel
       _ <- fib.join
     } yield ()
   }

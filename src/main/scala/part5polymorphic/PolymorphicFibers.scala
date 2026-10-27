@@ -1,6 +1,6 @@
 package part5polymorphic
 
-import cats.effect._
+import cats.effect.*
 import cats.effect.kernel.Outcome
 import cats.effect.kernel.Outcome.{Canceled, Errored, Succeeded}
 
@@ -10,8 +10,7 @@ Summary
  */
 
 object PolymorphicFibers extends IOApp.Simple {
-
-  // Spawn - generalising fibers - create fibers for any effect
+  // Spawn - generalizing fibers - create fibers for any effect
   trait MyGenSpawn[F[_], E] extends MonadCancel[F, E] {
     def start[A](fa: F[A]): F[Fiber[F, Throwable, A]] // creates a fiber
 
@@ -40,10 +39,10 @@ object PolymorphicFibers extends IOApp.Simple {
 
   //These are so the for comprehension works
 
-  import cats.syntax.flatMap._
-  import cats.syntax.functor._ // flatMap
+  import cats.syntax.flatMap.*
+  import cats.syntax.functor.* // flatMap
   // generalize
-  import cats.effect.syntax.spawn._ // start extension method
+  import cats.effect.syntax.spawn.* // start extension method
 
   def effectOnSomeThread[F[_], A](fa: F[A])(implicit spawn: Spawn[F]): F[Outcome[F, Throwable, A]] = for {
     fib <- fa.start
@@ -106,16 +105,15 @@ object PolymorphicFibers extends IOApp.Simple {
   // beware this is a simple implementation - certain cases are not taken into account
   // (which would make the code more complicated)
 
-  import scala.concurrent.duration._
-  import utils.general._
+  import scala.concurrent.duration.*
 
-  val fast = IO.sleep(1.second) >> IO(42).debug
-  val slow = IO.sleep(2.seconds) >> IO("Scala").debug
+  val fast = IO.sleep(1.second) >> IO(42)
+  val slow = IO.sleep(2.seconds) >> IO("Scala")
   val race = ioRace(fast, slow)
   val race_v2 = generalRace(fast, slow)
 
   override def run = {
-    race_v2.void.debug
+    race_v2.void
   }
 
 }
